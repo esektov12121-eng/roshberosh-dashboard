@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RoshBeRosh Bot Control Center</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Inter:wght@300;400;500;600;700&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19;
+            color: #f3f4f6;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .hebrew-font {
+            font-family: 'Rubik', sans-serif;
+        }
+        .mono-font {
+            font-family: 'Fira Code', monospace;
+        }
+        /* Custom scrollbar for terminal */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        .log-entry:hover {
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-gray-900 border-b border-gray-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-md">
+        <div class="flex items-center space-x-2.5">
+            <div class="bg-gradient-to-tr from-purple-600 to-indigo-600 w-9 h-9 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-900/40">
+                <i class="fa-solid fa-gamepad text-white text-base"></i>
+            </div>
+            <div>
+                <h1 class="text-sm font-bold tracking-tight text-white leading-none">RoshBeRosh</h1>
+                <span class="text-[10px] text-indigo-400 font-medium tracking-wider uppercase">Live Control Center</span>
+            </div>
+        </div>
+        
+        <!-- Live Status Badge -->
+        <div class="flex items-center space-x-3">
+            <div id="status-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold flex items-center space-x-1.5 bg-gray-800 text-gray-400">
+                <span id="status-dot" class="w-2 h-2 rounded-full bg-gray-500"></span>
+                <span id="status-text">OFFLINE</span>
+            </div>
+            
+            <button id="quick-power-btn" class="bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white w-9 h-9 rounded-lg flex items-center justify-center transition shadow-md shadow-emerald-950/20">
+                <i class="fa-solid fa-play"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="flex-1 flex flex-col max-w-6xl w-full mx-auto p-3 md:p-6 space-y-4 pb-20 md:pb-6">
+        
+        <!-- Mobile Bottom Tabs Navigation -->
+        <div class="flex md:hidden bg-gray-900/90 backdrop-blur border border-gray-800 rounded-xl p-1 shadow-lg sticky bottom-2 z-40">
+            <button id="tab-btn-board" class="flex-1 flex flex-col items-center justify-center py-2 text-indigo-400 font-semibold bg-gray-800 rounded-lg transition" onclick="switchTab('board')">
+                <i class="fa-solid fa-square-poll-horizontal text-base mb-1"></i>
+                <span class="text-[10px]">Game Board</span>
+            </button>
+            <button id="tab-btn-terminal" class="flex-1 flex flex-col items-center justify-center py-2 text-gray-400 font-medium rounded-lg transition" onclick="switchTab('terminal')">
+                <i class="fa-solid fa-terminal text-base mb-1"></i>
+                <span class="text-[10px]">Terminal Logs</span>
+            </button>
+            <button id="tab-btn-settings" class="flex-1 flex flex-col items-center justify-center py-2 text-gray-400 font-medium rounded-lg transition" onclick="switchTab('settings')">
+                <i class="fa-solid fa-sliders text-base mb-1"></i>
+                <span class="text-[10px]">Settings</span>
+            </button>
+        </div>
+
+        <!-- Layout Wrapper (Grid on Desktop, Flex/Tabs on Mobile) -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 flex-1">
+            
+            <!-- COLUMN 1: GAME BOARD & STATS (Span 7 on Desktop) -->
+            <section id="tab-panel-board" class="md:col-span-7 flex flex-col space-y-4">
+                
+                <!-- WALLET / USER CARD -->
+                <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-xl relative overflow-hidden">
+                    <div class="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-indigo-500/10 to-transparent rounded-full filter blur-xl"></div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-11 h-11 bg-gray-800 border border-gray-700 rounded-xl flex items-center justify-center">
+                                <i class="fa-solid fa-user-ninja text-lg text-indigo-400"></i>
+                            </div>
+                            <div>
+                                <h3 id="player-username" class="font-bold text-gray-100 text-sm leading-tight">Player</h3>
+                                <p class="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Authenticated Device Account</p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button id="btn-claim-rewards" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition">
+                                <i class="fa-solid fa-gift"></i>
+                                <span>Claim Daily</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Wallet Items -->
+                    <div class="grid grid-cols-4 gap-2 mt-4">
+                        <div class="bg-gray-800/40 border border-gray-800 rounded-xl p-2.5 text-center">
+                            <div class="text-amber-500 text-xs mb-1"><i class="fa-solid fa-coins"></i></div>
+                            <div id="player-coins" class="text-sm font-bold text-gray-100">0</div>
+                            <div class="text-[9px] text-gray-500 font-medium uppercase">Coins</div>
+                        </div>
+                        <div class="bg-gray-800/40 border border-gray-800 rounded-xl p-2.5 text-center">
+                            <div class="text-indigo-400 text-xs mb-1"><i class="fa-solid fa-trophy"></i></div>
+                            <div id="player-points" class="text-sm font-bold text-gray-100">0</div>
+                            <div class="text-[9px] text-gray-500 font-medium uppercase">Trophies</div>
+                        </div>
+                        <div class="bg-gray-800/40 border border-gray-800 rounded-xl p-2.5 text-center">
+                            <div class="text-emerald-400 text-xs mb-1"><i class="fa-solid fa-bolt"></i></div>
+                            <div id="player-energy" class="text-sm font-bold text-gray-100">0</div>
+                            <div class="text-[9px] text-gray-500 font-medium uppercase">Energy</div>
+                        </div>
+                        <div class="bg-gray-800/40 border border-gray-800 rounded-xl p-2.5 text-center">
+                            <div class="text-pink-400 text-xs mb-1"><i class="fa-solid fa-gem"></i></div>
+                            <div id="player-diamonds" class="text-sm font-bold text-gray-100">0</div>
+                            <div class="text-[9px] text-gray-500 font-medium uppercase">Diamonds</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACTIVE MULTIPLAYER PLAYING AREA -->
+                <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-xl flex-1 flex flex-col justify-between min-h-[300px] relative overflow-hidden">
+                    
+                    <!-- Header Info -->
+                    <div class="flex justify-between items-center border-b border-gray-800/80 pb-3">
+                        <div class="flex items-center space-x-1.5 text-gray-400 text-xs font-semibold">
+                            <i class="fa-solid fa-dice text-indigo-400"></i>
+                            <span class="uppercase tracking-wider">Round</span>
+                            <span id="active-round-num" class="bg-indigo-950 text-indigo-300 px-2 py-0.5 rounded text-xs font-bold">1</span>
+                        </div>
+                        
+                        <!-- Timer Countdown -->
+                        <div id="game-timer-container" class="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-red-950/40 border border-red-800/50 text-red-400 hidden animate-pulse">
+                            <i class="fa-regular fa-clock"></i>
+                            <span id="game-timer" class="font-bold text-xs">20s</span>
+                        </div>
+                    </div>
+
+                    <!-- Opponent Widget -->
+                    <div id="opponent-bar" class="flex items-center justify-between bg-gray-800/40 border border-gray-800 rounded-xl p-3 my-3">
+                        <div class="flex items-center space-x-2.5">
+                            <div class="w-8 h-8 rounded-full bg-purple-900/60 border border-purple-700/50 flex items-center justify-center">
+                                <i class="fa-solid fa-user-secret text-purple-300 text-sm"></i>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-gray-500 font-medium block leading-none uppercase tracking-wider">Current Opponent</span>
+                                <h4 id="opponent-username" class="font-bold text-sm text-gray-200">Waiting for Match...</h4>
+                            </div>
+                        </div>
+                        <div id="opponent-points-badge" class="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-gray-900/60 text-xs text-indigo-400 font-bold border border-gray-800 hidden">
+                            <i class="fa-solid fa-trophy text-[10px]"></i>
+                            <span id="opponent-points">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Category Panel (Centered Hebrew Text) -->
+                    <div class="flex-1 flex flex-col items-center justify-center text-center p-4">
+                        <p class="text-[11px] text-indigo-400 font-bold tracking-widest uppercase mb-2">Active Category / קטגוריה</p>
+                        <h2 id="active-category-text" class="hebrew-font text-2xl md:text-3xl font-bold text-white leading-relaxed tracking-wide px-4 py-2 bg-indigo-950/20 rounded-2xl border border-indigo-900/30 max-w-full inline-block">
+                            אין משחק פעיל
+                        </h2>
+                        <p id="turn-notice" class="text-xs text-gray-400 mt-3 font-semibold"></p>
+                    </div>
+
+                    <!-- Manual Word Submission Zone -->
+                    <div class="mt-4 border-t border-gray-800/80 pt-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-gray-400 flex items-center space-x-1">
+                                <i class="fa-solid fa-keyboard text-indigo-400"></i>
+                                <span>Manual Override (iOS Inputs)</span>
+                            </span>
+                            <span id="my-turn-badge" class="text-[10px] bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded font-bold border border-emerald-800/50 hidden">YOUR TURN</span>
+                        </div>
+                        <form id="manual-answer-form" class="flex space-x-2" onsubmit="submitManualAnswer(event)">
+                            <input 
+                                type="text" 
+                                id="manual-answer-input" 
+                                placeholder="כתוב תשובה בעברית..." 
+                                class="hebrew-font flex-1 bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-base text-white text-right placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition"
+                                dir="rtl"
+                                autocomplete="off"
+                            >
+                            <button 
+                                type="submit" 
+                                class="bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-semibold px-5 rounded-xl transition flex items-center justify-center"
+                            >
+                                <i class="fa-solid fa-arrow-up"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Used Answers Log -->
+                <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-xl">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2.5 flex items-center space-x-1.5">
+                        <i class="fa-solid fa-history text-indigo-400"></i>
+                        <span>Used Answers This Round / תשובות שנעשו</span>
+                    </h3>
+                    <div id="used-answers-container" class="hebrew-font flex flex-wrap gap-2 max-h-[100px] overflow-y-auto pt-1">
+                        <p class="text-xs text-gray-500 italic">No answers logged yet.</p>
+                    </div>
+                </div>
+
+                <!-- Quick Stats Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-3 shadow-md">
+                        <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Total Matches</span>
+                        <div id="stat-total" class="text-xl font-extrabold text-white mt-0.5">0</div>
+                    </div>
+                    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-3 shadow-md">
+                        <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Victories</span>
+                        <div id="stat-wins" class="text-xl font-extrabold text-emerald-400 mt-0.5">0</div>
+                    </div>
+                    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-3 shadow-md">
+                        <span class="text-[10px] text-red-400 font-bold uppercase tracking-wider">Defeats</span>
+                        <div id="stat-losses" class="text-xl font-extrabold text-red-400 mt-0.5">0</div>
+                    </div>
+                    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-3 shadow-md">
+                        <span class="text-[10px] text-indigo-400 font-bold uppercase tracking-wider">Win Rate</span>
+                        <div id="stat-rate" class="text-xl font-extrabold text-indigo-400 mt-0.5">0%</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- COLUMN 2: LIVE TERMINAL LOGS (Span 5 on Desktop) -->
+            <section id="tab-panel-terminal" class="md:col-span-5 flex flex-col space-y-4 hidden md:flex">
+                <div class="bg-gray-900 border border-gray-800 rounded-2xl shadow-xl flex flex-col h-full min-h-[500px] md:min-h-[600px] overflow-hidden">
+                    
+                    <!-- Terminal Header -->
+                    <div class="bg-gray-950 border-b border-gray-800 px-4 py-3 flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="flex space-x-1.5">
+                                <span class="w-3 h-3 rounded-full bg-red-500/80"></span>
+                                <span class="w-3 h-3 rounded-full bg-yellow-500/80"></span>
+                                <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
+                            </span>
+                            <span class="text-xs font-bold text-gray-400 tracking-wide uppercase ml-2 flex items-center space-x-1.5">
+                                <i class="fa-solid fa-terminal text-indigo-400"></i>
+                                <span>Diagnostics Console</span>
+                            </span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button id="btn-clear-logs" class="text-gray-500 hover:text-gray-300 text-xs py-1 px-2 rounded hover:bg-gray-900 transition" title="Clear console">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                            <label class="flex items-center text-xs text-gray-500 space-x-1.5 select-none cursor-pointer">
+                                <input type="checkbox" id="auto-scroll-toggle" checked class="rounded border-gray-800 bg-gray-950 text-indigo-600 focus:ring-0">
+                                <span>Scroll</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Filter Controls -->
+                    <div class="bg-gray-950/50 border-b border-gray-800 px-3 py-2 flex items-center space-x-2">
+                        <select id="log-filter-system" class="bg-gray-900 border border-gray-800 rounded-lg text-[11px] text-gray-400 px-2 py-1.5 focus:outline-none focus:border-indigo-500 transition max-w-[120px]">
+                            <option value="ALL">All Systems</option>
+                            <option value="AUTH">Authentication</option>
+                            <option value="PREFLIGHT">Preflight</option>
+                            <option value="SOCKET">Websockets</option>
+                            <option value="MATCH">Gameplay</option>
+                            <option value="AI">Gemini AI</option>
+                            <option value="QUEUE">Matchmaker</option>
+                            <option value="SYSTEM">System Core</option>
+                        </select>
+                        <select id="log-filter-level" class="bg-gray-900 border border-gray-800 rounded-lg text-[11px] text-gray-400 px-2 py-1.5 focus:outline-none focus:border-indigo-500 transition max-w-[110px]">
+                            <option value="ALL">All Levels</option>
+                            <option value="INFO">Info</option>
+                            <option value="SUCCESS">Success</option>
+                            <option value="WARN">Warnings</option>
+                            <option value="ERROR">Errors</option>
+                            <option value="AI">AI Output</option>
+                        </select>
+                        <div class="relative flex-1">
+                            <input type="text" id="log-search" placeholder="Search logs..." class="w-full bg-gray-900 border border-gray-800 rounded-lg text-[11px] text-gray-300 pl-6 pr-2 py-1.5 focus:outline-none focus:border-indigo-500 transition">
+                            <i class="fa-solid fa-magnifying-glass absolute left-2 top-2.5 text-[10px] text-gray-600"></i>
+                        </div>
+                    </div>
+
+                    <!-- Live Logging Window -->
+                    <div id="terminal-window" class="flex-1 bg-gray-950 p-3.5 overflow-y-auto mono-font text-xs space-y-2 select-text">
+                        <!-- Filled by JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- COLUMN 3: SETTINGS PANEL (Shown based on Tab state on Mobile, span 12 or hidden on desk/mob) -->
+            <section id="tab-panel-settings" class="md:col-span-12 flex flex-col space-y-4 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                    
+                    <!-- Form Settings (Span 7) -->
+                    <div class="lg:col-span-7 bg-gray-900 border border-gray-800 rounded-2xl p-5 shadow-xl">
+                        <h2 class="text-base font-bold text-gray-100 flex items-center space-x-2 mb-4">
+                            <i class="fa-solid fa-gear text-indigo-400"></i>
+                            <span>Nakama & Bot Configurations</span>
+                        </h2>
+
+                        <form id="config-form" class="space-y-4" onsubmit="saveConfigForm(event)">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Nakama Server Host</label>
+                                    <input type="text" id="cfg-host" required class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-indigo-500 transition">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Server Key (Basic Auth)</label>
+                                    <input type="text" id="cfg-server-key" required class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-indigo-500 transition">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Port</label>
+                                    <input type="text" id="cfg-port" required class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-indigo-500 transition">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 font-sans">Client Build</label>
+                                    <input type="text" id="cfg-client-build" required class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-indigo-500 transition">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 font-sans">Room Card ID</label>
+                                    <input type="text" id="cfg-room-card" required class="w-full bg-gray-950 border border-gray-800 rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-indigo-500 transition">
+                                </div>
+                            </div>
+
+                            <div class="border-t border-gray-800 my-4 pt-4">
+                                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Device Authentication ID</label>
+                                <div class="flex space-x-2">
+                                    <input type="text" id="cfg-device-id" required class="flex-1 bg-gray-950 border border-gray-800 rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-indigo-500 transition">
+                                    <button type="button" onclick="generateDeviceUUID()" class="bg-gray-800 hover:bg-gray-700 active:bg-gray-950 text-indigo-400 border border-gray-700 hover:border-indigo-500/35 font-semibold text-xs px-3.5 rounded-xl transition flex items-center justify-center">
+                                        <i class="fa-solid fa-arrows-rotate mr-1.5"></i>
+                                        <span>New UUID</span>
+                                    </button>
+                                </div>
+                                <p class="text-[10px] text-gray-500 mt-1">If using multiple bot accounts, generate a unique hardware Device ID to prevent overlay sessions.</p>
+                            </div>
+
+                            <div class="border-t border-gray-800 my-4 pt-4">
+                                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Google Gemini API Key (Optional)</label>
+                                <div class="flex space-x-2">
+                                    <input type="password" id="cfg-gemini-key" placeholder="AI answer solver activation key..." class="flex-1 bg-gray-950 border border-gray-800 rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-indigo-500 transition">
+                                    <button type="button" onclick="testGeminiConnection()" class="bg-gray-800 hover:bg-gray-700 active:bg-gray-950 text-emerald-400 border border-gray-700 hover:border-emerald-500/35 font-semibold text-xs px-3.5 rounded-xl transition flex items-center justify-center">
+                                        <i class="fa-solid fa-plug-circle-check mr-1.5"></i>
+                                        <span>Test AI Key</span>
+                                    </button>
+                                </div>
+                                <p id="gemini-test-msg" class="text-[10px] mt-1 hidden"></p>
+                            </div>
+
+                            <!-- Switches -->
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-gray-800 pt-4 mt-4">
+                                <label class="flex items-center space-x-2.5 cursor-pointer">
+                                    <input type="checkbox" id="cfg-use-ssl" class="rounded border-gray-800 bg-gray-950 text-indigo-600 focus:ring-0">
+                                    <div>
+                                        <span class="block text-xs font-bold text-gray-200">Force SSL</span>
+                                        <span class="text-[9px] text-gray-500">Connect via Secure WebSocket (WSS)</span>
+                                    </div>
+                                </label>
+                                <label class="flex items-center space-x-2.5 cursor-pointer">
+                                    <input type="checkbox" id="cfg-auto-start" class="rounded border-gray-800 bg-gray-950 text-indigo-600 focus:ring-0">
+                                    <div>
+                                        <span class="block text-xs font-bold text-gray-200">Auto-Start Bot</span>
+                                        <span class="text-[9px] text-gray-500">Start runner on system bootstrap</span>
+                                    </div>
+                                </label>
+                                <label class="flex items-center space-x-2.5 cursor-pointer">
+                                    <input type="checkbox" id="cfg-wire-debug" class="rounded border-gray-800 bg-gray-950 text-indigo-600 focus:ring-0">
+                                    <div>
+                                        <span class="block text-xs font-bold text-gray-200">Wire Debug</span>
+                                        <span class="text-[9px] text-gray-500">Log low-level TCP frame data</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Form Submit -->
+                            <div class="flex justify-end pt-3">
+                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-bold text-sm px-6 py-2.5 rounded-xl transition flex items-center shadow-lg shadow-indigo-950/45">
+                                    <i class="fa-solid fa-floppy-disk mr-2"></i>
+                                    <span>Save & Apply Configuration</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Custom Dictionary Heuristics & Diagnostics (Span 5) -->
+                    <div class="lg:col-span-5 flex flex-col space-y-4">
+                        
+                        <!-- Manual Action Hub -->
+                        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5 shadow-xl">
+                            <h2 class="text-base font-bold text-gray-100 flex items-center space-x-2 mb-4">
+                                <i class="fa-solid fa-wrench text-indigo-400"></i>
+                                <span>Diagnostics Controls</span>
+                            </h2>
+                            <div class="space-y-3">
+                                <button onclick="triggerRequeue()" class="w-full bg-yellow-600/10 hover:bg-yellow-600/20 text-yellow-500 border border-yellow-800/50 font-semibold text-sm py-3 px-4 rounded-xl transition flex items-center justify-between">
+                                    <span class="flex items-center"><i class="fa-solid fa-person-running mr-2.5 text-base"></i> Force Re-queue Matchmaking</span>
+                                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                                </button>
+                                <button id="diagnostics-claim" onclick="triggerClaim()" class="w-full bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 border border-emerald-800/50 font-semibold text-sm py-3 px-4 rounded-xl transition flex items-center justify-between">
+                                    <span class="flex items-center"><i class="fa-solid fa-coins mr-2.5 text-base"></i> Execute Daily Reward Claim RPCs</span>
+                                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                                </button>
+                                <button onclick="triggerRestart()" class="w-full bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-800/50 font-semibold text-sm py-3 px-4 rounded-xl transition flex items-center justify-between">
+                                    <span class="flex items-center"><i class="fa-solid fa-sync mr-2.5 text-base"></i> Reboot Connection Pipe</span>
+                                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Heuristic Keywords Dictionary -->
+                        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5 shadow-xl flex-1 flex flex-col justify-between">
+                            <div>
+                                <h2 class="text-base font-bold text-gray-100 flex items-center space-x-2 mb-2">
+                                    <i class="fa-solid fa-book-atlas text-indigo-400"></i>
+                                    <span>Rule-Based Match Override</span>
+                                </h2>
+                                <p class="text-[11px] text-gray-500 mb-4">When a category matches the regex below, the bot skips Gemini and immediately submits the configured static answer. Prevents rate limits or timing timeouts.</p>
+                                
+                                <div id="custom-keywords-list" class="space-y-2 max-h-[220px] overflow-y-auto mb-4">
+                                    <!-- Populated by JavaScript -->
+                                </div>
+                            </div>
+
+                            <div class="border-t border-gray-800 pt-4 flex space-x-2">
+                                <input type="text" id="kw-regex" placeholder="Regex / Match term" class="flex-1 bg-gray-950 border border-gray-800 rounded-xl px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-indigo-500">
+                                <input type="text" id="kw-answer" placeholder="Static Hebrew Answer" class="flex-1 bg-gray-950 border border-gray-800 rounded-xl px-3 py-2 text-xs text-gray-200 text-right focus:outline-none focus:border-indigo-500" dir="rtl">
+                                <button onclick="addNewCustomKeyword()" class="bg-indigo-600 hover:bg-indigo-500 text-white p-2 rounded-xl transition flex items-center justify-center">
+                                    <i class="fa-solid fa-plus px-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Global Floating Notifications -->
+    <div id="notification-container" class="fixed top-16 right-4 z-50 space-y-2.5 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- Socket.IO Client -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/app.js"></script>
+</body>
+</html>

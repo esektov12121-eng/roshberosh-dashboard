@@ -1,0 +1,19 @@
+{
+    "nakamaHost": "api-roshberosh.clevergames.org",
+    "port": "443",
+    "serverKey": "rg2uHTDck0Za8Nt0yMUqD3972IGnxLn75o+ANnVLGl0=",
+    "useSsl": true,
+    "deviceId": "D6BB4ACF-5E85-4E31-BFD7-1C33411E9211",
+    "roomCardId": "classic_room",
+    "clientBuild": "2.1.4",
+    "geminiKey": "",
+    "wireDebug": false,
+    "autoStart": true,
+    "requeueDelayMs": 4000,
+    "maxAuthRetries": 5,
+    "maxPipelineRetries": 10,
+    "customKeywords": [
+        { "regex": "אופניים", "answer": "גלגל" },
+        { "regex": "מדינות|ארצות", "answer": "ישראל" }
+    ]
+}
