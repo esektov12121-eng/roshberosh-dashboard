@@ -92,6 +92,8 @@ class RoshBeRoshBot extends EventEmitter {
             roomCardId: config.roomCardId || "classic_room",
             clientBuild: config.clientBuild || "2.1.4",
             geminiKey: config.geminiKey || "",
+            geminiModel: config.geminiModel || "gemini-3.5-flash",
+            thinkingLevel: config.thinkingLevel || "low",
             wireDebug: config.wireDebug || false,
             requeueDelayMs: config.requeueDelayMs || 4000,
             maxAuthRetries: config.maxAuthRetries || 5,
@@ -143,6 +145,8 @@ class RoshBeRoshBot extends EventEmitter {
                 roomCardId: this.config.roomCardId,
                 clientBuild: this.config.clientBuild,
                 hasGeminiKey: !!this.config.geminiKey,
+                geminiModel: this.config.geminiModel,
+                thinkingLevel: this.config.thinkingLevel,
                 wireDebug: this.config.wireDebug
             }
         };
@@ -169,7 +173,7 @@ class RoshBeRoshBot extends EventEmitter {
         });
     }
 
-    // --- Core Startup & Pipeline ---
+    // --- Core Startup & Pipeline --
     async start() {
         if (this.running) {
             this.log("warn", "SYSTEM", "Bot is already running.");
@@ -263,7 +267,7 @@ class RoshBeRoshBot extends EventEmitter {
         }
     }
 
-    // --- Nakama Helpers ---
+    // --- Nakama Helpers --
     async authenticate(attempt = 0) {
         this.log("info", "AUTH", `Authenticating with Device ID: ${this.config.deviceId.slice(0, 12)}...`);
         try {
@@ -443,7 +447,7 @@ class RoshBeRoshBot extends EventEmitter {
         });
     }
 
-    // --- Matchmaking Queue Management ---
+    // --- Matchmaking Queue Management --
     async enterQueue() {
         if (!this.socket) {
             throw new Error("Cannot enter queue: socket not established.");
@@ -490,7 +494,7 @@ class RoshBeRoshBot extends EventEmitter {
         }
     }
 
-    // --- WebSocket Sockets & Transport ---
+    // --- WebSocket Sockets & Transport --
     async connectSocket() {
         this.log("info", "SOCKET", "Opening real-time WebSocket connection...");
         const sock = this.client.createSocket(this.config.useSsl);
@@ -1001,7 +1005,23 @@ Reply with ONLY the Hebrew word or short phrase. No punctuation, no English, no 
             }
         };
 
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${this.config.geminiKey}`;
+        const model = this.config.geminiModel || "gemini-3.5-flash";
+        
+        // Add thinkingConfig if model supports thinking levels (Gemini 3/3.5 models)
+        if (model.startsWith("gemini-3") || model.includes("gemini-3")) {
+            const level = this.config.thinkingLevel || "low";
+            if (level === "disabled") {
+                requestBody.generationConfig.thinkingConfig = {
+                    thinkingBudget: 0
+                };
+            } else {
+                requestBody.generationConfig.thinkingConfig = {
+                    thinkingLevel: level
+                };
+            }
+        }
+
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.config.geminiKey}`;
 
         try {
             const res = await fetch(endpoint, {
@@ -1022,7 +1042,7 @@ Reply with ONLY the Hebrew word or short phrase. No punctuation, no English, no 
             parsedText = parsedText.trim().split("\n")[0].trim();
             parsedText = parsedText.replace(/^["'`«»״\-–—\s]+|["'`«»״\-–—\s]+$/g, "").trim();
 
-            this.log("info", "AI", `Gemini AI proposal: "${parsedText}" (for category "${category}")`);
+            this.log("info", "AI", `Gemini AI proposal (${model}): "${parsedText}" (for category "${category}")`);
             return parsedText || null;
         } catch (err) {
             this.log("error", "AI", `Gemini integration error: ${err.message}`);

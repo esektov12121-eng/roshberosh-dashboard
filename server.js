@@ -18,6 +18,8 @@ const DEFAULT_CONFIG = {
     roomCardId: "classic_room",
     clientBuild: "2.1.4",
     geminiKey: process.env.GEMINI_API_KEY || "",
+    geminiModel: "gemini-3.5-flash",
+    thinkingLevel: "low",
     wireDebug: false,
     autoStart: true,
     requeueDelayMs: 4000,
@@ -202,7 +204,7 @@ io.on("connection", (socket) => {
         }
 
         bot.log("info", "AI", "Testing Gemini key connectivity...");
-        const tempBot = new RoshBeRoshBot({ geminiKey: keyToUse });
+        const tempBot = new RoshBeRoshBot({ geminiKey: keyToUse, geminiModel: activeConfig.geminiModel, thinkingLevel: activeConfig.thinkingLevel });
         try {
             const answer = await tempBot.askGemini("פירות צהובים", []);
             if (answer) {

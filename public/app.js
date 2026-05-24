@@ -404,6 +404,8 @@ function populateConfigInputs(cfg) {
     document.getElementById("cfg-room-card").value = cfg.roomCardId || "";
     document.getElementById("cfg-device-id").value = cfg.deviceId || "";
     document.getElementById("cfg-gemini-key").value = cfg.geminiKey || "";
+    document.getElementById("cfg-gemini-model").value = cfg.geminiModel || "gemini-3.5-flash";
+    document.getElementById("cfg-thinking-level").value = cfg.thinkingLevel || "low";
     document.getElementById("cfg-use-ssl").checked = cfg.useSsl !== false;
     document.getElementById("cfg-auto-start").checked = cfg.autoStart !== false;
     document.getElementById("cfg-wire-debug").checked = !!cfg.wireDebug;
@@ -420,6 +422,8 @@ function saveConfigForm(e) {
         roomCardId: document.getElementById("cfg-room-card").value.trim(),
         deviceId: document.getElementById("cfg-device-id").value.trim(),
         geminiKey: document.getElementById("cfg-gemini-key").value.trim(),
+        geminiModel: document.getElementById("cfg-gemini-model").value,
+        thinkingLevel: document.getElementById("cfg-thinking-level").value,
         useSsl: document.getElementById("cfg-use-ssl").checked,
         autoStart: document.getElementById("cfg-auto-start").checked,
         wireDebug: document.getElementById("cfg-wire-debug").checked,
@@ -512,18 +516,27 @@ function startBot() {
     socket.emit("bot-start");
 }
 
+// Global action fallback functions (exposes functions for HTML elements)
+window.startBot = startBot;
+
 function stopBot() {
     socket.emit("bot-stop");
 }
+
+window.stopBot = stopBot;
 
 function triggerRestart() {
     socket.emit("bot-restart");
     showNotification("info", "Reboot trigger requested.");
 }
 
+window.triggerRestart = triggerRestart;
+
 function triggerRequeue() {
     socket.emit("force-requeue");
 }
+
+window.triggerRequeue = triggerRequeue;
 
 function triggerClaim() {
     const btn = document.getElementById("diagnostics-claim");
@@ -532,6 +545,8 @@ function triggerClaim() {
     setTimeout(() => { btn.disabled = false; }, 3000);
 }
 
+window.triggerClaim = triggerClaim;
+
 function submitManualAnswer(e) {
     e.preventDefault();
     const val = manualAnswerInput.value.trim();
@@ -539,6 +554,8 @@ function submitManualAnswer(e) {
     socket.emit("submit-manual-answer", val);
     manualAnswerInput.value = "";
 }
+
+window.submitManualAnswer = submitManualAnswer;
 
 // --- Floating Notifications Manager ---
 function showNotification(type, message) {
@@ -580,6 +597,8 @@ function showNotification(type, message) {
         }, 300);
     }, 4000);
 }
+
+window.showNotification = showNotification;
 
 // Initialize layout for active viewports on startup
 window.addEventListener("DOMContentLoaded", () => {

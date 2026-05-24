@@ -7,6 +7,8 @@
     "roomCardId": "classic_room",
     "clientBuild": "2.1.4",
     "geminiKey": "",
+    "geminiModel": "gemini-3.5-flash",
+    "thinkingLevel": "low",
     "wireDebug": false,
     "autoStart": true,
     "requeueDelayMs": 4000,
